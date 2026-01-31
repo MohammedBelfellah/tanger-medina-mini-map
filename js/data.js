@@ -3,6 +3,7 @@
 const data = {
   medinaData: null,
   poisData: null,
+  streetsData: null,
 };
 
 async function loadMedianaBoundary() {
@@ -24,5 +25,17 @@ async function loadPOIs() {
     console.log("POIs loaded", data.poisData);
   } catch (error) {
     console.error("Error loading POIs:", error);
+  }
+}
+
+async function loadStreets() {
+  try {
+    const response = await fetch("data/streets.geojson");
+    data.streetsData = await response.json();
+    console.log("Streets loaded", data.streetsData);
+    // Render the streets on the map
+    renderStreets(data.streetsData);
+  } catch (error) {
+    console.error("Error loading streets:", error);
   }
 }

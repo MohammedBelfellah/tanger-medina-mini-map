@@ -1,0 +1,109 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Rue Siaghine",
+        "type": "main_street",
+        "importance": "high"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-5.808098615674055, 35.78857365055923],
+          [-5.809271257657571, 35.788849811961995],
+          [-5.811597628042506, 35.788972550056016],
+          [-5.813299850276394, 35.789187341262604],
+          [-5.814226615714119, 35.788972550056016]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Rue des Chrétiens",
+        "type": "main_street",
+        "importance": "high"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-5.809403652719311, 35.7827740394348],
+          [-5.810124788533135, 35.78429571489823],
+          [-5.811124788533135, 35.78529571489823],
+          [-5.812410911998455, 35.78623165347107],
+          [-5.813356591017282, 35.78624158266966]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Rue de la Kasbah",
+        "type": "main_street",
+        "importance": "medium"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-5.814945331768229, 35.78871173138103],
+          [-5.813299850276394, 35.787187341262604],
+          [-5.812864837927975, 35.78562786922045],
+          [-5.8128459243468455, 35.784860720745286]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Rue du Marché",
+        "type": "commercial_street",
+        "importance": "high"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-5.80794730703127, 35.78452317307129],
+          [-5.808271257657571, 35.785849811961995],
+          [-5.809597628042506, 35.786972550056016],
+          [-5.810799850276394, 35.787687341262604]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Rue Touahen",
+        "type": "main_street",
+        "importance": "medium"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-5.810524788533135, 35.78329571489823],
+          [-5.811124788533135, 35.78429571489823],
+          [-5.811624788533135, 35.78529571489823],
+          [-5.812124788533135, 35.78629571489823]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Rue Mosquée",
+        "type": "secondary_street",
+        "importance": "low"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-5.807985134192251, 35.78618021153764],
+          [-5.809271257657571, 35.78684981196199],
+          [-5.810597628042506, 35.78757255005601],
+          [-5.811799850276394, 35.7881873412626]
+        ]
+      }
+    }
+  ]
+}

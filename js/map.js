@@ -15,6 +15,9 @@ function initializeMap() {
 
   // Load and display medina boundary
   loadMedianaBoundary();
+
+  // Load and display streets
+  loadStreets();
 }
 
 function renderMedianaBoundary(geojsonData) {
@@ -25,9 +28,49 @@ function renderMedianaBoundary(geojsonData) {
       weight: 3,
       opacity: 0.8,
       fillOpacity: 0.1,
-      fillColor: "#FF0000",
+      fillColor: "#ff4800",
     },
   }).addTo(map);
 
   console.log("Medina boundary rendered");
+}
+
+function renderStreets(geojsonData) {
+  // Display streets with different styles based on importance
+  L.geoJSON(geojsonData, {
+    style: function (feature) {
+      const importance = feature.properties.importance;
+
+      // Style based on street importance
+      if (importance === "high") {
+        return {
+          color: "#2E4057",
+          weight: 4,
+          opacity: 0.9,
+        };
+      } else if (importance === "medium") {
+        return {
+          color: "#4A6FA5",
+          weight: 3,
+          opacity: 0.8,
+        };
+      } else {
+        return {
+          color: "#7C98B3",
+          weight: 2,
+          opacity: 0.7,
+        };
+      }
+    },
+    onEachFeature: function (feature, layer) {
+      // Add popup with street name
+      if (feature.properties && feature.properties.name) {
+        layer.bindPopup(
+          `<strong>${feature.properties.name}</strong><br>Type: ${feature.properties.type}`,
+        );
+      }
+    },
+  }).addTo(map);
+
+  console.log("Streets rendered");
 }
