@@ -11,6 +11,9 @@ let routeLayer = null;
 let poisData = [];
 let streetsData = null;
 let streetGraph = null;
+let watchId = null; // For GPS tracking
+let isNavigating = false; // Track if navigation is active
+let currentDestination = null; // Store current destination
 
 /**
  * Initialize navigation and search features
@@ -204,6 +207,10 @@ function startNavigation() {
     return;
   }
 
+  // Store destination for tracking
+  currentDestination = { lat: destLat, lng: destLng };
+  isNavigating = true;
+
   // Clear existing route
   if (routeLayer) {
     map.removeLayer(routeLayer);
@@ -215,10 +222,10 @@ function startNavigation() {
     [destLng, destLat],
   );
 
-  if (route && route.length > 0) {
+  if (route && route.path && route.path.length > 0) {
     // Draw the route on the map
     routeLayer = L.polyline(
-      route.map((coord) => [coord[1], coord[0]]),
+      route.path.map((coord) => [coord[1], coord[0]]),
       {
         color: "#8e44ad",
         weight: 6,
@@ -228,7 +235,7 @@ function startNavigation() {
 
     // Add a slightly lighter line on top for effect
     L.polyline(
-      route.map((coord) => [coord[1], coord[0]]),
+      route.path.map((coord) => [coord[1], coord[0]]),
       {
         color: "#a855f7",
         weight: 4,
@@ -239,10 +246,18 @@ function startNavigation() {
     // Fit map to show the route
     map.fitBounds(routeLayer.getBounds(), { padding: [50, 50] });
 
-    // Update button
+    // Start GPS tracking for real-time updates
+    startTracking();
+
+    // Update button and distance
     document.getElementById("start-nav").innerHTML =
-      '<i class="fas fa-check"></i> Route Found!';
+      '<i class="fas fa-walking"></i> Navigating...';
+    document.getElementById("nav-distance-value").textContent = formatDistance(
+      route.distance,
+    );
   } else {
+    isNavigating = false;
+    currentDestination = null;
     alert("Could not find a route. Try a destination closer to the streets.");
     document.getElementById("start-nav").innerHTML =
       '<i class="fas fa-play"></i> Start Navigation';
@@ -499,8 +514,17 @@ function findRouteOnStreets(startCoord, endCoord) {
     path.push(endCoord); // Destination exact position
   }
 
-  console.log(`Route found with ${path.length} points`);
-  return path.length >= 2 ? path : null;
+  // Calculate total route distance
+  let totalDistance = 0;
+  for (let i = 0; i < path.length - 1; i++) {
+    totalDistance += getDistance(path[i], path[i + 1]);
+  }
+
+  console.log(
+    `Route found with ${path.length} points, distance: ${totalDistance.toFixed(0)}m`,
+  );
+
+  return path.length >= 2 ? { path: path, distance: totalDistance } : null;
 }
 
 /**
@@ -532,6 +556,11 @@ function setStreetsData(data) {
  * Cancel navigation
  */
 function cancelNavigation() {
+  // Stop GPS tracking
+  stopTracking();
+  isNavigating = false;
+  currentDestination = null;
+
   // Clear route layer
   if (routeLayer) {
     map.removeLayer(routeLayer);
@@ -559,6 +588,17 @@ function cancelNavigation() {
 }
 
 /**
+ * Stop GPS tracking
+ */
+function stopTracking() {
+  if (watchId !== null) {
+    navigator.geolocation.clearWatch(watchId);
+    watchId = null;
+    console.log("GPS tracking stopped");
+  }
+}
+
+/**
  * Clear destination marker
  */
 function clearDestination() {
@@ -576,51 +616,17 @@ function locateUser() {
   locateBtn.classList.add("locating");
 
   // TEST MODE: Use fixed starting point for testing
-  // Remove this and uncomment the geolocation code below for production
-  userLocation = {
-    lat: 35.786074393894,
-    lng: -5.811693364685466,
-  };
+  // Set to false for production (real GPS)
+  const TEST_MODE = true;
 
-  // Clear previous user marker
-  if (userMarker) {
-    map.removeLayer(userMarker);
+  if (TEST_MODE) {
+    // Simulated location for testing
+    updateUserPosition(35.786074393894, -5.811693364685466, true);
+    locateBtn.classList.remove("locating");
+    return;
   }
 
-  // Add user marker
-  userMarker = L.marker([userLocation.lat, userLocation.lng], {
-    icon: L.divIcon({
-      className: "user-marker",
-      html: '<div style="width: 20px; height: 20px; background: #3498db; border: 3px solid white; border-radius: 50%; box-shadow: 0 2px 10px rgba(0,0,0,0.3);"></div>',
-      iconSize: [20, 20],
-      iconAnchor: [10, 10],
-    }),
-  })
-    .addTo(map)
-    .bindPopup("You are here! (Test location)")
-    .openPopup();
-
-  // Pan to user location
-  map.setView([userLocation.lat, userLocation.lng], 17);
-
-  locateBtn.classList.remove("locating");
-
-  // Update distance if destination is set
-  const navPanel = document.getElementById("nav-panel");
-  if (!navPanel.classList.contains("hidden")) {
-    const destLat = parseFloat(navPanel.dataset.lat);
-    const destLng = parseFloat(navPanel.dataset.lng);
-    const distance = calculateDistance(
-      userLocation.lat,
-      userLocation.lng,
-      destLat,
-      destLng,
-    );
-    document.getElementById("nav-distance-value").textContent =
-      formatDistance(distance);
-  }
-
-  /* PRODUCTION MODE: Uncomment this block and remove the test code above
+  // PRODUCTION MODE: Real GPS
   if (!navigator.geolocation) {
     alert("Geolocation is not supported by your browser.");
     locateBtn.classList.remove("locating");
@@ -629,17 +635,182 @@ function locateUser() {
 
   navigator.geolocation.getCurrentPosition(
     (position) => {
-      userLocation = {
-        lat: position.coords.latitude,
-        lng: position.coords.longitude,
-      };
-      // ... rest of the geolocation code
+      updateUserPosition(
+        position.coords.latitude,
+        position.coords.longitude,
+        false,
+      );
+      locateBtn.classList.remove("locating");
     },
     (error) => {
-      // ... error handling
-    }
+      console.error("Geolocation error:", error);
+      alert("Unable to get your location. Please enable GPS.");
+      locateBtn.classList.remove("locating");
+    },
+    { enableHighAccuracy: true, timeout: 10000 },
   );
-  */
+}
+
+/**
+ * Update user position on the map
+ */
+function updateUserPosition(lat, lng, isTest) {
+  userLocation = { lat, lng };
+
+  // Clear previous user marker
+  if (userMarker) {
+    map.removeLayer(userMarker);
+  }
+
+  // Add user marker
+  userMarker = L.marker([lat, lng], {
+    icon: L.divIcon({
+      className: "user-marker",
+      html: '<div style="width: 20px; height: 20px; background: #3498db; border: 3px solid white; border-radius: 50%; box-shadow: 0 2px 10px rgba(0,0,0,0.3);"></div>',
+      iconSize: [20, 20],
+      iconAnchor: [10, 10],
+    }),
+  })
+    .addTo(map)
+    .bindPopup(isTest ? "You are here! (Test location)" : "You are here!")
+    .openPopup();
+
+  // Pan to user location (only if not navigating, to avoid constant jumping)
+  if (!isNavigating) {
+    map.setView([lat, lng], 17);
+  }
+
+  // Update distance if destination is set
+  const navPanel = document.getElementById("nav-panel");
+  if (!navPanel.classList.contains("hidden") && currentDestination) {
+    const distance = calculateDistance(
+      lat,
+      lng,
+      currentDestination.lat,
+      currentDestination.lng,
+    );
+    document.getElementById("nav-distance-value").textContent =
+      formatDistance(distance);
+
+    // Check if user arrived (within 15 meters)
+    if (distance < 15 && isNavigating) {
+      arrivedAtDestination();
+    }
+  }
+
+  // If navigating, update the route
+  if (isNavigating && currentDestination) {
+    updateRoute();
+  }
+}
+
+/**
+ * Start real-time GPS tracking for navigation
+ */
+function startTracking() {
+  // TEST MODE check
+  const TEST_MODE = true;
+
+  if (TEST_MODE) {
+    console.log("TEST MODE: GPS tracking simulated");
+    return;
+  }
+
+  if (!navigator.geolocation) {
+    console.error("Geolocation not supported");
+    return;
+  }
+
+  // Watch position continuously
+  watchId = navigator.geolocation.watchPosition(
+    (position) => {
+      console.log(
+        "Position update:",
+        position.coords.latitude,
+        position.coords.longitude,
+      );
+      updateUserPosition(
+        position.coords.latitude,
+        position.coords.longitude,
+        false,
+      );
+    },
+    (error) => {
+      console.error("GPS tracking error:", error);
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 1000, // Accept positions up to 1 second old
+    },
+  );
+
+  console.log("GPS tracking started, watchId:", watchId);
+}
+
+/**
+ * Update the route based on current position
+ */
+function updateRoute() {
+  if (!userLocation || !currentDestination) return;
+
+  // Clear existing route
+  map.eachLayer((layer) => {
+    if (layer instanceof L.Polyline && !(layer instanceof L.Polygon)) {
+      if (
+        layer.options &&
+        (layer.options.color === "#8e44ad" || layer.options.color === "#a855f7")
+      ) {
+        map.removeLayer(layer);
+      }
+    }
+  });
+
+  // Find new route
+  const route = findRouteOnStreets(
+    [userLocation.lng, userLocation.lat],
+    [currentDestination.lng, currentDestination.lat],
+  );
+
+  if (route && route.path) {
+    const latLngs = route.path.map((coord) => [coord[1], coord[0]]);
+    L.polyline(latLngs, {
+      color: "#8e44ad",
+      weight: 5,
+      opacity: 0.8,
+    }).addTo(map);
+
+    // Update distance display
+    document.getElementById("nav-distance-value").textContent = formatDistance(
+      route.distance,
+    );
+  }
+}
+
+/**
+ * Called when user arrives at destination
+ */
+function arrivedAtDestination() {
+  isNavigating = false;
+  stopTracking();
+
+  // Show arrival message
+  const startBtn = document.getElementById("start-nav");
+  startBtn.innerHTML =
+    '<i class="fas fa-flag-checkered"></i> You have arrived!';
+  startBtn.style.background = "#27ae60";
+
+  // Show popup at destination
+  if (destinationMarker) {
+    destinationMarker.bindPopup("You have arrived!").openPopup();
+  }
+
+  // Play a sound or vibrate if supported
+  if (navigator.vibrate) {
+    navigator.vibrate([200, 100, 200]);
+  }
+
+  console.log("Arrived at destination!");
 }
 
 /**
