@@ -30,14 +30,20 @@ function initializeMap() {
     .attribution({
       prefix:
         '<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Flag_of_Morocco.svg/1280px-Flag_of_Morocco.svg.png" style="height: 14px; vertical-align: middle; margin-right: 5px;"> Tanger Medina Mini-Map',
-        
     })
     .addTo(map);
 
-  // Base map layer (Stamen Toner Lite - very clean, no clutter)
+  // Base map layer (Stamen Toner Lite via Stadia Maps)
+  // API key is domain-restricted in Stadia Maps dashboard for security
+  const STADIA_API_KEY = "18627d38-4099-488c-981c-41a1c7cf5a98";
+
   L.tileLayer(
-    "https://tiles.stadiamaps.com/tiles/stamen_toner_lite/{z}/{x}/{y}{r}.png",
-    { maxZoom: 19 },
+    `https://tiles.stadiamaps.com/tiles/stamen_toner_lite/{z}/{x}/{y}{r}.png?api_key=${STADIA_API_KEY}`,
+    {
+      maxZoom: 19,
+      attribution:
+        '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://stamen.com/">Stamen Design</a>',
+    },
   ).addTo(map);
 
   // Load medina boundary data
