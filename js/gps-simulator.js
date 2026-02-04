@@ -12,11 +12,12 @@ let simulationSpeed = 1000;
  * Start simulating GPS movement along the current route
  */
 function startSimulation() {
-  if (!isNavigating || !currentDestination) {
+  if (!getIsNavigating() || !getCurrentDestination()) {
     console.log("Please start navigation first");
     return;
   }
 
+  const routeLayer = getRouteLayer();
   if (!routeLayer) {
     console.log("No route found");
     return;

@@ -33,14 +33,29 @@ tanger-medina-mini-map/
 │   ├── app.js              # Application entry
 │   ├── map.js              # Map initialization and rendering
 │   ├── data.js             # GeoJSON data loading
-│   ├── navigation.js       # Search, routing, GPS tracking
-│   └── gps-simulator.js    # GPS simulation for testing
+│   ├── navigation.js       # Main navigation controller
+│   ├── gps-simulator.js    # GPS simulation for testing
+│   └── modules/
+│       ├── search.js       # POI search functionality
+│       ├── routing.js      # Dijkstra pathfinding algorithm
+│       ├── location.js     # GPS and user location
+│       └── ui.js           # Markers and route display
 ├── data/
 │   ├── medina_boundary.geojson   # Medina polygon
 │   ├── medina_streets.geojson    # Street network
 │   └── pois.geojson              # Points of interest
 └── assets/                 # Images and icons
 ```
+
+## Module Overview
+
+| Module          | Purpose                                |
+| --------------- | -------------------------------------- |
+| `search.js`     | POI search, filtering, results display |
+| `routing.js`    | Graph building, Dijkstra algorithm     |
+| `location.js`   | GPS tracking, user position            |
+| `ui.js`         | Map markers, route drawing             |
+| `navigation.js` | Coordinates all modules                |
 
 ## Technologies
 
