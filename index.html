@@ -4,18 +4,71 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tanger Medina Mini-Map</title>
+    <!-- Leaflet CSS -->
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"
     />
+    <!-- Font Awesome for icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
     <link rel="stylesheet" href="css/style.css" />
   </head>
   <body>
+    <!-- Search Panel -->
+    <div id="search-panel">
+      <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input
+          type="text"
+          id="search-input"
+          placeholder="Search destination (e.g., Bab Kasbah)"
+        />
+        <button id="clear-search" class="hidden">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div id="search-results" class="hidden"></div>
+    </div>
+
+    <!-- Navigation Panel -->
+    <div id="nav-panel" class="hidden">
+      <div class="nav-header">
+        <h3><i class="fas fa-route"></i> Navigation</h3>
+        <button id="close-nav"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="nav-info">
+        <div class="nav-destination">
+          <i class="fas fa-map-marker-alt"></i>
+          <span id="nav-destination-name">--</span>
+        </div>
+        <div class="nav-distance">
+          <i class="fas fa-walking"></i>
+          <span id="nav-distance-value">--</span>
+        </div>
+      </div>
+      <button id="start-nav" class="nav-btn">
+        <i class="fas fa-play"></i> Start Navigation
+      </button>
+      <button id="cancel-nav" class="nav-btn cancel">
+        <i class="fas fa-stop"></i> Cancel
+      </button>
+    </div>
+
+    <!-- Locate Me Button -->
+    <button id="locate-btn" title="Find my location">
+      <i class="fas fa-location-crosshairs"></i>
+    </button>
+
     <div id="map"></div>
 
+    <!-- Leaflet JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
     <script src="js/data.js"></script>
     <script src="js/map.js"></script>
+    <script src="js/navigation.js"></script>
     <script src="js/app.js"></script>
   </body>
 </html>

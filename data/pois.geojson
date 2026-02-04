@@ -1,0 +1,135 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 1,
+        "name": "Bab Kasbah",
+        "type": "gate",
+        "short_description": "Main gate leading into the Kasbah district."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.8149416663048585, 35.78872414724623]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 2,
+        "name": "Bab Gzenaya",
+        "type": "gate",
+        "short_description": "Historic gate of the old medina."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.813095540157063, 35.78599521323192]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 3,
+        "name": "Bab Rahbat Zraa",
+        "type": "gate",
+        "short_description": "Gate near the grain square area."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.812413838495875, 35.785709562197255]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 4,
+        "name": "Bab el-Fahs",
+        "type": "gate",
+        "short_description": "Main entrance gate to the medina from Grand Socco."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.812945311508649, 35.784913074092266]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 5,
+        "name": "Bab Merican",
+        "type": "gate",
+        "short_description": "Gate near the American quarter of the medina."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.809214432235077, 35.78462860286363]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 6,
+        "name": "Bab Dar Dbagh",
+        "type": "gate",
+        "short_description": "Gate near the tanneries district."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.809367359659003, 35.78618244160977]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 7,
+        "name": "Bab Marsa",
+        "type": "gate",
+        "short_description": "Gate leading to the port area."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.808956017329868, 35.78619653827561]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 8,
+        "name": "Bab Haha",
+        "type": "gate",
+        "short_description": "Historic gate on the northern side of the medina."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.8118215673303055, 35.78888517699304]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 9,
+        "name": "Bab el-Assa",
+        "type": "gate",
+        "short_description": "Gate near the Kasbah area."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.812683853836836, 35.78830396936309]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 10,
+        "name": "Test Bab",
+        "type": "gate",
+        "short_description": "Test gate location."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.812579029822217, 35.787661499424075]
+      }
+    }
+  ]
+}

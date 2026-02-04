@@ -1,7 +1,7 @@
 /**
  * Tanger Medina Mini-Map
  * Styles
- * Author: Mohammed Belfellah
+
  */
 
 /* Reset */
@@ -20,6 +20,238 @@ body {
 #map {
   width: 100%;
   height: 100vh;
+}
+
+/* ====== SEARCH PANEL ====== */
+#search-panel {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  z-index: 1000;
+  width: 320px;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  background: white;
+  border-radius: 8px;
+  padding: 10px 15px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+}
+
+.search-box i {
+  color: #8e44ad;
+  margin-right: 10px;
+}
+
+.search-box input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.search-box input::placeholder {
+  color: #aaa;
+}
+
+#clear-search {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #999;
+  padding: 5px;
+}
+
+#clear-search:hover {
+  color: #e74c3c;
+}
+
+#search-results {
+  background: white;
+  border-radius: 8px;
+  margin-top: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.search-result-item {
+  padding: 12px 15px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+  transition: background 0.2s;
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+.search-result-item:hover {
+  background: #f8f4fc;
+}
+
+.search-result-item .name {
+  font-weight: 600;
+  color: #333;
+}
+
+.search-result-item .type {
+  font-size: 12px;
+  color: #8e44ad;
+  text-transform: capitalize;
+}
+
+.search-result-item .desc {
+  font-size: 11px;
+  color: #888;
+  margin-top: 3px;
+}
+
+/* ====== NAVIGATION PANEL ====== */
+#nav-panel {
+  position: absolute;
+  bottom: 30px;
+  left: 15px;
+  z-index: 1000;
+  width: 320px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  padding: 15px;
+}
+
+.nav-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.nav-header h3 {
+  color: #8e44ad;
+  font-size: 16px;
+}
+
+.nav-header h3 i {
+  margin-right: 8px;
+}
+
+#close-nav {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #999;
+  font-size: 18px;
+}
+
+#close-nav:hover {
+  color: #e74c3c;
+}
+
+.nav-info {
+  margin-bottom: 15px;
+}
+
+.nav-destination,
+.nav-distance {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.nav-destination i {
+  color: #e74c3c;
+  margin-right: 10px;
+  width: 20px;
+}
+
+.nav-distance i {
+  color: #27ae60;
+  margin-right: 10px;
+  width: 20px;
+}
+
+.nav-btn {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  transition: all 0.2s;
+}
+
+#start-nav {
+  background: #8e44ad;
+  color: white;
+}
+
+#start-nav:hover {
+  background: #732d91;
+}
+
+.nav-btn.cancel {
+  background: #eee;
+  color: #666;
+}
+
+.nav-btn.cancel:hover {
+  background: #e74c3c;
+  color: white;
+}
+
+/* ====== LOCATE BUTTON ====== */
+#locate-btn {
+  position: absolute;
+  bottom: 120px;
+  right: 15px;
+  z-index: 1000;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background: white;
+  border: none;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  font-size: 18px;
+  color: #8e44ad;
+  transition: all 0.2s;
+}
+
+#locate-btn:hover {
+  background: #8e44ad;
+  color: white;
+}
+
+#locate-btn.locating {
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ====== UTILITIES ====== */
+.hidden {
+  display: none !important;
+}
+
+/* ====== ROUTING STYLES ====== */
+.leaflet-routing-container {
+  display: none;
 }
 
 /* Custom map labels */

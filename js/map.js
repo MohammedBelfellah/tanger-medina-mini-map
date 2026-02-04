@@ -29,29 +29,25 @@ function initializeMap() {
   L.control
     .attribution({
       prefix:
-        '<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Flag_of_Morocco.svg/1280px-Flag_of_Morocco.svg.png" style="height: 14px; vertical-align: middle; margin-right: 5px;"> Mohammed Belfellah | Tanger Medina Mini-Map',
+        '<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Flag_of_Morocco.svg/1280px-Flag_of_Morocco.svg.png" style="height: 14px; vertical-align: middle; margin-right: 5px;"> Tanger Medina Mini-Map',
+        
     })
     .addTo(map);
 
-  // Base map layer (CartoDB Positron - clean, minimal style)
+  // Base map layer (Stamen Toner Lite - very clean, no clutter)
   L.tileLayer(
-    "https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png",
+    "https://tiles.stadiamaps.com/tiles/stamen_toner_lite/{z}/{x}/{y}{r}.png",
     { maxZoom: 19 },
-  ).addTo(map);
-
-  // Labels pane (rendered on top of everything)
-  map.createPane("labelsPane");
-  map.getPane("labelsPane").style.zIndex = 700;
-  map.getPane("labelsPane").style.pointerEvents = "none";
-
-  // Map labels layer
-  L.tileLayer(
-    "https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png",
-    { pane: "labelsPane", maxZoom: 19 },
   ).addTo(map);
 
   // Load medina boundary data
   loadMedinaBoundary();
+
+  // Load medina streets data
+  loadMedinaStreets();
+
+  // Load points of interest
+  loadPOIs();
 }
 
 /**
@@ -74,6 +70,103 @@ function renderMedinaBoundary(geojsonData) {
 
   // Add place labels
   addMedinaLabels();
+}
+
+/**
+ * Render the medina streets on the map
+ * Dead-end streets in orange, connected streets in brown
+ * @param {Object} geojsonData - GeoJSON data for the streets
+ */
+function renderMedinaStreets(geojsonData) {
+  // Build a map of all endpoints to detect connections
+  const endpointCount = {};
+  const tolerance = 0.00005; // ~5 meters tolerance for matching points
+
+  // Round coordinates to detect nearby points as same
+  const roundCoord = (coord) => {
+    return `${Math.round(coord[0] / tolerance) * tolerance},${Math.round(coord[1] / tolerance) * tolerance}`;
+  };
+
+  // Count how many streets connect at each endpoint
+  geojsonData.features.forEach((feature) => {
+    const coords = feature.geometry.coordinates;
+    const start = roundCoord(coords[0]);
+    const end = roundCoord(coords[coords.length - 1]);
+
+    endpointCount[start] = (endpointCount[start] || 0) + 1;
+    endpointCount[end] = (endpointCount[end] || 0) + 1;
+  });
+
+  // Render streets with different colors based on connectivity
+  L.geoJSON(geojsonData, {
+    style: function (feature) {
+      const coords = feature.geometry.coordinates;
+      const start = roundCoord(coords[0]);
+      const end = roundCoord(coords[coords.length - 1]);
+
+      // Dead-end: one endpoint connects to only 1 street (itself)
+      const isDeadEnd = endpointCount[start] === 1 || endpointCount[end] === 1;
+
+      if (isDeadEnd) {
+        return {
+          color: "#E67E22", // Orange for dead-end streets
+          weight: 3,
+          opacity: 0.9,
+          dashArray: "5, 5", // Dashed line for dead-ends
+        };
+      } else {
+        return {
+          color: "#2C3E50", // Dark blue-gray for connected streets
+          weight: 3,
+          opacity: 0.9,
+        };
+      }
+    },
+  }).addTo(map);
+}
+
+/**
+ * Render POIs on the map with colored markers and popups
+ * @param {Object} geojsonData - GeoJSON data for POIs
+ */
+function renderPOIs(geojsonData) {
+  // Color mapping for POI types
+  const typeColors = {
+    square: "#3498db", // Blue
+    culture: "#9b59b6", // Purple
+    museum: "#e67e22", // Orange
+    street: "#27ae60", // Green
+    monument: "#e74c3c", // Red
+    viewpoint: "#1abc9c", // Teal
+    cafe: "#f39c12", // Yellow
+    gate: "#8e44ad", // Dark purple for gates (Bab)
+  };
+
+  L.geoJSON(geojsonData, {
+    pointToLayer: function (feature, latlng) {
+      const poiType = feature.properties.type;
+      const color = typeColors[poiType] || "#E63946";
+
+      return L.circleMarker(latlng, {
+        radius: 8,
+        fillColor: color,
+        color: "#fff",
+        weight: 2,
+        opacity: 1,
+        fillOpacity: 0.9,
+      });
+    },
+    onEachFeature: function (feature, layer) {
+      if (feature.properties) {
+        const { name, type, short_description } = feature.properties;
+        layer.bindPopup(`
+          <strong>${name}</strong><br>
+          <em>${type}</em><br>
+          <small>${short_description}</small>
+        `);
+      }
+    },
+  }).addTo(map);
 }
 
 /**
