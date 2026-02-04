@@ -1,23 +1,70 @@
 # Tanger Medina Mini-Map
 
-A mini interactive map showcasing the Medina district of Tangier, Morocco.
+An interactive navigation map for the Old Medina of Tangier, Morocco. Built with Leaflet.js for offline-first pedestrian navigation through the historic streets.
 
 ## Features
 
-- Interactive map visualization
-- Points of Interest (POIs)
-- Medina boundary display
+- Interactive map with Stamen Toner Lite basemap
+- Custom street network for the medina
+- Turn-by-turn pedestrian navigation
+- Real-time GPS tracking
+- Search for gates (Bab) and points of interest
+- Offline routing using Dijkstra's algorithm
+- Dead-end street detection (orange dashed lines)
+- Arrival detection with notifications
 
-## Structure
+## How to Use
 
-- `index.html` - Main HTML entry point
-- `css/style.css` - Styling
-- `js/app.js` - Application logic
-- `js/map.js` - Map functionality
-- `js/data.js` - Data management
-- `data/` - GeoJSON data files
-- `assets/` - Images and icons
+1. Open `index.html` in a browser
+2. Click the **Locate** button to find your position
+3. Search for a destination (e.g., "Bab Kasbah")
+4. Click on a result to select it
+5. Click **Start Navigation** to begin
+6. Follow the purple route to your destination
 
-## Getting Started
+## Project Structure
 
-Open `index.html` in a web browser to view the map.
+```
+tanger-medina-mini-map/
+├── index.html              # Main entry point
+├── css/
+│   └── style.css           # UI styling
+├── js/
+│   ├── app.js              # Application entry
+│   ├── map.js              # Map initialization and rendering
+│   ├── data.js             # GeoJSON data loading
+│   ├── navigation.js       # Search, routing, GPS tracking
+│   └── gps-simulator.js    # GPS simulation for testing
+├── data/
+│   ├── medina_boundary.geojson   # Medina polygon
+│   ├── medina_streets.geojson    # Street network
+│   └── pois.geojson              # Points of interest
+└── assets/                 # Images and icons
+```
+
+## Technologies
+
+- **Leaflet.js** - Interactive maps
+- **Stadia Maps** - Stamen Toner Lite tiles
+- **GeoJSON** - Geographic data format
+- **Dijkstra's Algorithm** - Pathfinding on street network
+
+## Testing Navigation
+
+Open browser console (F12) and use these commands:
+
+```javascript
+startSimulation(); // Walk along the route
+stopSimulation(); // Stop walking
+setSimulationSpeed(500); // Faster walking
+teleportTo(lat, lng); // Jump to location
+nudge(0.0001, 0); // Move north
+```
+
+## Author
+
+Mohammed Belfellah
+
+## License
+
+MIT
