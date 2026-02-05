@@ -9,7 +9,7 @@ let userMarker = null;
 let watchId = null;
 
 // Set to false for production (real GPS)
-const TEST_MODE = true;
+const TEST_MODE = false;
 const TEST_LOCATION = { lat: 35.786074393894, lng: -5.811693364685466 };
 
 /**
