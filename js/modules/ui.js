@@ -1,8 +1,4 @@
-/**
- * UI Module
- * Handles markers and map UI elements
- * Author: Mohammed Belfellah
- */
+
 
 let destinationMarker = null;
 let routeLayer = null;

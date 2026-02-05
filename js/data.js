@@ -1,8 +1,3 @@
-/**
- * Tanger Medina Mini-Map
- * Data loading module
- * Author: Mohammed Belfellah
- */
 
 /**
  * Load the Old Medina boundary GeoJSON and render it on the map

@@ -1,8 +1,4 @@
-/**
- * Search Module
- * Handles POI search functionality
- * Author: Mohammed Belfellah
- */
+
 
 let poisData = [];
 

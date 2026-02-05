@@ -1,8 +1,4 @@
-/**
- * Location Module
- * Handles GPS and user location
- * Author: Mohammed Belfellah
- */
+
 
 let userLocation = null;
 let userMarker = null;
