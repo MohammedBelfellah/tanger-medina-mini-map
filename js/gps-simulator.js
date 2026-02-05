@@ -1,7 +1,4 @@
-/**
- * GPS Simulator for Testing Live Navigation
- * Author: Mohammed Belfellah
- */
+
 
 let simulationInterval = null;
 let simulationPath = [];
