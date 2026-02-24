@@ -1,5 +1,3 @@
-
-
 let userLocation = null;
 let userMarker = null;
 let watchId = null;
@@ -32,6 +30,7 @@ function locateUser() {
 
   if (TEST_MODE) {
     updateUserPosition(TEST_LOCATION.lat, TEST_LOCATION.lng, true);
+    startGPSTracking();
     locateBtn.classList.remove("locating");
     return;
   }
@@ -49,6 +48,7 @@ function locateUser() {
         position.coords.longitude,
         false,
       );
+      startGPSTracking();
       locateBtn.classList.remove("locating");
     },
     (error) => {
@@ -100,6 +100,11 @@ function startGPSTracking() {
   if (!navigator.geolocation) {
     console.error("Geolocation not supported");
     return;
+  }
+
+  if (watchId !== null) {
+    navigator.geolocation.clearWatch(watchId);
+    watchId = null;
   }
 
   watchId = navigator.geolocation.watchPosition(
