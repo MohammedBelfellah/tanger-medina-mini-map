@@ -21,6 +21,8 @@ python -m http.server 5500
 
 **All documentation is in `/documentation` folder**
 
+**Online documentation:** https://tanger-medina-mini-map-documentation.netlify.app/
+
 ```bash
 # Open documentation viewer
 Open documentation/index.html in browser
