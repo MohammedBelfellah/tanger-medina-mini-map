@@ -1,84 +1,120 @@
 # Tanger Medina Mini-Map
 
-An interactive navigation map for the Old Medina of Tangier, Morocco. Built with Leaflet.js for offline-first pedestrian navigation through the historic streets.
+Interactive offline GPS navigation system for the Old Medina of Tangier, Morocco.
+
+---
+
+## Quick Start
+
+### Run the Application
+
+```bash
+# Option 1: Open directly in browser
+Open index.html
+
+# Option 2: Run with Python server
+python -m http.server 5500
+# Visit: http://localhost:5500
+```
+
+### View Documentation
+
+**All documentation is in `/documentation` folder**
+
+```bash
+# Open documentation viewer
+Open documentation/index.html in browser
+```
+
+**4 Documentation Guides:**
+
+1. **GETTING STARTED** - Quick overview
+2. **DOCUMENTATION** - Complete technical guide
+3. **MODIFICATION GUIDE** - How to add features
+4. **API REFERENCE** - Function documentation
+
+---
 
 ## Features
 
-- Interactive map with Stamen Toner Lite basemap
-- Custom street network for the medina
-- Turn-by-turn pedestrian navigation
+- Interactive map with street network
 - Real-time GPS tracking
-- Search for gates (Bab) and points of interest
-- Offline routing using Dijkstra's algorithm
-- Dead-end street detection (orange dashed lines)
-- Arrival detection with notifications
+- Turn-by-turn pedestrian navigation
+- Full-text search for gates & POI
+- Offline routing (no server needed)
+- Mobile-friendly responsive design
+- Dead-end detection
 
-## How to Use
-
-1. Open `index.html` in a browser
-2. Click the **Locate** button to find your position
-3. Search for a destination (e.g., "Bab Kasbah")
-4. Click on a result to select it
-5. Click **Start Navigation** to begin
-6. Follow the purple route to your destination
+---
 
 ## Project Structure
 
 ```
 tanger-medina-mini-map/
-├── index.html              # Main entry point
+├── index.html                 # Main application
+├── README.md                  # This file
 ├── css/
-│   └── style.css           # UI styling
+│   └── style.css
 ├── js/
-│   ├── app.js              # Application entry
-│   ├── map.js              # Map initialization and rendering
-│   ├── data.js             # GeoJSON data loading
-│   ├── navigation.js       # Main navigation controller
-│   ├── gps-simulator.js    # GPS simulation for testing
+│   ├── app.js
+│   ├── map.js
+│   ├── data.js
+│   ├── navigation.js
+│   ├── gps-simulator.js
 │   └── modules/
-│       ├── search.js       # POI search functionality
-│       ├── routing.js      # Dijkstra pathfinding algorithm
-│       ├── location.js     # GPS and user location
-│       └── ui.js           # Markers and route display
+│       ├── search.js
+│       ├── routing.js
+│       ├── location.js
+│       └── ui.js
 ├── data/
-│   ├── medina_boundary.geojson   # Medina polygon
-│   ├── medina_streets.geojson    # Street network
-│   └── pois.geojson              # Points of interest
-└── assets/                 # Images and icons
+│   ├── medina_streets.geojson
+│   ├── medina_boundary.geojson
+│   ├── pois.geojson
+│   └── map_beni-ider.geojson
+├── assets/
+│   ├── icons/
+│   └── images/
+└── documentation/             ← ALL DOCS HERE
+    ├── index.html             ← OPEN THIS TO READ
+    ├── START_HERE.md
+    ├── DOCUMENTATION.md
+    ├── MODIFICATION_GUIDE.md
+    └── API_REFERENCE.md
 ```
 
-## Module Overview
+---
 
-| Module          | Purpose                                |
-| --------------- | -------------------------------------- |
-| `search.js`     | POI search, filtering, results display |
-| `routing.js`    | Graph building, Dijkstra algorithm     |
-| `location.js`   | GPS tracking, user position            |
-| `ui.js`         | Map markers, route drawing             |
-| `navigation.js` | Coordinates all modules                |
+## How to Use
+
+1. Click **Locate** button to find your position
+2. Search for destination (e.g., "Bab Kasbah")
+3. Click result to select destination
+4. Click **Start Navigation** to begin
+5. Follow purple route on map
+6. Get notification when you arrive
+
+---
+
+## For Development
+
+**See `/documentation/index.html` for complete guides:**
+
+- How to modify the app
+- All available functions
+- Architecture overview
+- Step-by-step tutorials
+
+---
 
 ## Technologies
 
-- **Leaflet.js** - Interactive maps
-- **Stadia Maps** - Stamen Toner Lite tiles
-- **GeoJSON** - Geographic data format
-- **Dijkstra's Algorithm** - Pathfinding on street network
+- Leaflet.js (mapping)
+- Dijkstra's Algorithm (routing)
+- HTML5 Geolocation (GPS)
+- GeoJSON (data format)
+- Pure JavaScript (no frameworks)
 
-## Testing Navigation
-
-Open browser console (F12) and use these commands:
-
-```javascript
-startSimulation(); // Walk along the route
-stopSimulation(); // Stop walking
-setSimulationSpeed(500); // Faster walking
-teleportTo(lat, lng); // Jump to location
-nudge(0.0001, 0); // Move north
-```
-
-## Author
-
-Mohammed Belfellah
+---
 
 ## License
 

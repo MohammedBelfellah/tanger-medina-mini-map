@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tanger Medina Mini-Map - Complete Documentation</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+            color: #2c3e50;
+            padding: 0;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 16px rgba(0, 0, 0, 0.1);
+            overflow: visible;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 60px 80px;
+            text-align: center;
+            border-bottom: 3px solid #3498db;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2.8em;
+            margin-bottom: 12px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-top: 0;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+            font-weight: 300;
+            letter-spacing: 0.3px;
+        }
+
+        .tabs-container {
+            display: flex;
+            border-bottom: 2px solid #e0e0e0;
+            background: #ffffff;
+            overflow-x: auto;
+            flex-wrap: wrap;
+            padding: 0 20px;
+            justify-content: center;
+            position: sticky;
+            top: 0;
+            z-index: 98;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            width: 100%;
+        }
+
+        .tab-button {
+            flex: 1;
+            min-width: 150px;
+            padding: 16px 18px;
+            background: #ffffff;
+            border: none;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 700;
+            color: #7f8c8d;
+            transition: all 0.3s ease;
+            border-bottom: 4px solid transparent;
+            white-space: nowrap;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .tab-button i {
+            font-size: 14px;
+        }
+
+        .tab-button:hover {
+            background: #ecf0f1;
+            color: #2c3e50;
+            border-bottom-color: #bdc3c7;
+        }
+
+        .tab-button.active {
+            color: #2c3e50;
+            border-bottom-color: #3498db;
+            background: #f8f9fa;
+            font-weight: 700;
+        }
+
+        .tab-button.active i {
+            color: #3498db;
+        }
+
+        .content-area {
+            display: none;
+            padding: 60px;
+            min-height: 500px;
+            animation: fadeIn 0.3s ease;
+            background: #ffffff;
+            line-height: 1.9;
+            margin: 0 auto;
+        }
+
+        .content-area.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .markdown-content {
+            line-height: 1.8;
+            color: #2c3e50;
+            width: 100%;
+            overflow: visible;
+        }
+
+        /* Markdown Styling */
+        .markdown-content h1 {
+            font-size: 2.2em;
+            margin: 50px 0 25px 0;
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 18px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .markdown-content h2 {
+            font-size: 1.7em;
+            margin: 40px 0 18px 0;
+            color: #34495e;
+            font-weight: 700;
+            border-left: 4px solid #3498db;
+            padding-left: 15px;
+        }
+
+        .markdown-content h3 {
+            font-size: 1.3em;
+            margin: 28px 0 12px 0;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .markdown-content h4 {
+            font-size: 1.05em;
+            margin: 18px 0 8px 0;
+            color: #95a5a6;
+            font-weight: 600;
+        }
+
+        .markdown-content p {
+            margin: 18px 0;
+            line-height: 1.85;
+            color: #34495e;
+        }
+
+        .markdown-content ul,
+        .markdown-content ol {
+            margin: 20px 0 20px 35px;
+        }
+
+        .markdown-content li {
+            margin: 10px 0;
+            line-height: 1.8;
+            color: #34495e;
+        }
+
+        .markdown-content code {
+            background: #ecf0f1;
+            padding: 4px 10px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #c0392b;
+            font-size: 0.9em;
+        }
+
+        .markdown-content pre {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            overflow-y: auto;
+            margin: 24px 0;
+            border-left: 5px solid #3498db;
+            font-size: 0.85em;
+            line-height: 1.5;
+            max-height: 600px;
+            font-family: 'Courier New', Courier, monospace;
+            white-space: pre;
+            word-wrap: normal;
+        }
+
+        .markdown-content pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+            font-size: inherit;
+            border: none;
+        }
+
+        .markdown-content blockquote {
+            border-left: 4px solid #3498db;
+            padding-left: 20px;
+            margin: 20px 0;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+
+        .markdown-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            border: 1px solid #e0e0e0;
+        }
+
+        .markdown-content table th,
+        .markdown-content table td {
+            padding: 14px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .markdown-content table th {
+            background: #f5f7fa;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .markdown-content table tr:hover {
+            background: #f5f7fa;
+        }
+
+        .markdown-content a {
+            color: #3498db;
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .markdown-content a:hover {
+            border-bottom-color: #3498db;
+        }
+
+        .markdown-content hr {
+            margin: 35px 0;
+            border: none;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .markdown-content em {
+            font-style: italic;
+            color: #7f8c8d;
+        }
+
+        .markdown-content img {
+            display: none !important;
+        }
+
+        .markdown-content figure {
+            display: none !important;
+        }
+
+        .icon-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background: #3498db;
+            color: white;
+            border-radius: 50%;
+            margin-right: 8px;
+            font-size: 14px;
+        }
+
+        .footer {
+            background: #2c3e50;
+            padding: 32px 40px;
+            text-align: center;
+            color: #ecf0f1;
+            border-top: 3px solid #3498db;
+            font-size: 0.95em;
+        }
+
+        .search-box {
+            padding: 24px 70px;
+            background: #ecf0f1;
+            border-bottom: 1px solid #bdc3c7;
+            display: none;
+        }
+
+        .search-box.show {
+            display: block;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            font-size: 14px;
+            background: white;
+            color: #2c3e50;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .scroll-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        .scroll-top:hover {
+            background: #2980b9;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(52, 152, 219, 0.4);
+        }
+
+        .scroll-top.show {
+            display: flex;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                max-width: calc(100% - 10px);
+                margin: 5px auto;
+                border-radius: 6px;
+                overflow: visible;
+            }
+
+            .header {
+                padding: 40px 20px;
+                position: relative;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .tabs-container {
+                position: sticky;
+                top: 0;
+                z-index: 98;
+            }
+
+            .content-area {
+                padding: 35px 25px;
+            }
+
+            .search-box {
+                padding: 16px 20px;
+            }
+
+            .tab-button {
+                font-size: 11px;
+                padding: 12px 10px;
+                min-width: 110px;
+                gap: 6px;
+            }
+
+            .tab-button i {
+                font-size: 12px;
+            }
+
+            .tabs-container {
+                padding: 0 10px;
+                justify-content: flex-start;
+            }
+
+            .footer {
+                padding: 20px;
+                font-size: 0.9em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                max-width: 100%;
+                margin: 0;
+                border-radius: 0;
+                overflow: visible;
+            }
+
+            .header {
+                padding: 30px 15px;
+                position: relative;
+            }
+
+            .header h1 {
+                font-size: 1.5em;
+                margin-bottom: 8px;
+            }
+
+            .tabs-container {
+                position: sticky;
+                top: 0;
+                z-index: 98;
+            }
+
+            .content-area {
+                padding: 25px 15px;
+            }
+
+            .search-box {
+                padding: 12px 15px;
+            }
+
+            .tab-button {
+                font-size: 10px;
+                padding: 10px 8px;
+                min-width: 100px;
+                gap: 4px;
+            }
+
+            .tab-button i {
+                font-size: 11px;
+            }
+
+            .scroll-top {
+                width: 40px;
+                height: 40px;
+                font-size: 16px;
+                bottom: 20px;
+                right: 20px;
+            }
+
+            .footer {
+                padding: 16px 15px;
+                font-size: 0.85em;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Tanger Medina Mini-Map</h1>
+            <p>Complete Documentation & Reference Guide</p>
+        </div>
+
+        <div class="tabs-container" id="tabsContainer"></div>
+
+        <div id="contentContainer"></div>
+
+        <div class="footer">
+            <p>Documentation created February 2025 | MIT License | <strong>Last Updated: Feb 24, 2026</strong></p>
+        </div>
+    </div>
+
+    <button class="scroll-top" id="scrollTop" title="Scroll to top">↑</button>
+
+    <script>
+        // Document list - in order (consolidated to 4 essential tabs)
+        const docs = [
+            { id: 'start', label: 'GETTING STARTED', icon: 'bi-play-circle' },
+            { id: 'docs', label: 'DOCUMENTATION', icon: 'bi-file-text' },
+            { id: 'modify', label: 'MODIFICATION GUIDE', icon: 'bi-tools' },
+            { id: 'api', label: 'API REFERENCE', icon: 'bi-code-slash' }
+        ];
+
+        // Map docs to file names
+        const docFiles = {
+            'start': 'START_HERE.md',
+            'docs': 'DOCUMENTATION.md',
+            'modify': 'MODIFICATION_GUIDE.md',
+            'api': 'API_REFERENCE.md'
+        };
+
+        let content = {};
+
+        // Load all markdown files
+        async function loadAllDocuments() {
+            for (let doc of docs) {
+                try {
+                    const response = await fetch(docFiles[doc.id]);
+                    content[doc.id] = await response.text();
+                } catch (error) {
+                    content[doc.id] = `Error loading ${docFiles[doc.id]}: ${error.message}`;
+                }
+            }
+            renderTabs();
+            renderContent('start');
+        }
+
+        // Render tab buttons
+        function renderTabs() {
+            const container = document.getElementById('tabsContainer');
+            container.innerHTML = docs.map(doc => `
+                <button class="tab-button ${doc.id === 'start' ? 'active' : ''}" onclick="renderContent('${doc.id}')" title="${doc.label}">
+                    <i class="bi ${doc.icon}"></i> ${doc.label}
+                </button>
+            `).join('');
+        }
+
+        // Render content for selected tab
+        function renderContent(docId) {
+            // Update active tab
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Find and activate the correct button
+            const activeBtn = document.querySelector(`button[onclick="renderContent('${docId}')"]`);
+            if (activeBtn) activeBtn.classList.add('active');
+
+            // Update content
+            const contentContainer = document.getElementById('contentContainer');
+            const markdownText = content[docId] || 'Content not loaded';
+
+            // Configure marked options
+            marked.setOptions({
+                breaks: true,
+                gfm: true
+            });
+
+            // Custom marked renderer to hide images
+            const renderer = new marked.Renderer();
+            renderer.image = () => ''; // Hide images
+            renderer.figure = () => ''; // Hide figures
+
+            const htmlContent = marked.parse(markdownText, { renderer });
+
+            contentContainer.innerHTML = `
+                <div id="content-${docId}" class="content-area active">
+                    <div class="markdown-content">
+                        ${htmlContent}
+                    </div>
+                </div>
+            `;
+
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Scroll to top button functionality
+        const scrollTopBtn = document.getElementById('scrollTop');
+        window.addEventListener('scroll', () => {
+            if (window.pageYOffset > 300) {
+                scrollTopBtn.classList.add('show');
+            } else {
+                scrollTopBtn.classList.remove('show');
+            }
+        });
+
+        scrollTopBtn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Load documents on page load
+        window.addEventListener('load', loadAllDocuments);
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                const docIndex = parseInt(e.key);
+                if (docIndex >= 1 && docIndex <= docs.length) {
+                    renderContent(docs[docIndex - 1].id);
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>
