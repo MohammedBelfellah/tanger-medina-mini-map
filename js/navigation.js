@@ -1,36 +1,41 @@
 /**
  * Navigation Controller
- * Main module that coordinates all navigation features
- * Author: Mohammed Belfellah
+ * Coordinates navigation features (Search + Location + UI + Routing)
  */
 
 let isNavigating = false;
 let currentDestination = null;
 
+// Reroute throttling (avoid heavy recomputation)
+let lastRerouteAt = 0;
+const REROUTE_COOLDOWN_MS = 1500; // reroute max once every 1.5s
+
 /**
  * Initialize all navigation features
+ * (search/location/ui are in modules)
  */
 function initNavigation() {
-  initSearch();
-  initLocation();
+  // Defensive: modules may load in different order
+  if (typeof initSearch === "function") initSearch();
+  if (typeof initLocation === "function") initLocation();
   initNavPanel();
 }
 
 /**
- * Initialize navigation panel
+ * Initialize navigation panel buttons
  */
 function initNavPanel() {
   const closeNav = document.getElementById("close-nav");
   const startNav = document.getElementById("start-nav");
   const cancelNav = document.getElementById("cancel-nav");
 
-  closeNav.addEventListener("click", closeNavPanel);
-  cancelNav.addEventListener("click", cancelNavigation);
-  startNav.addEventListener("click", startNavigation);
+  if (closeNav) closeNav.addEventListener("click", closeNavPanel);
+  if (cancelNav) cancelNav.addEventListener("click", cancelNavigation);
+  if (startNav) startNav.addEventListener("click", startNavigation);
 }
 
 /**
- * Select destination from search result
+ * Called by search module when user selects a destination
  */
 function selectDestination(item) {
   const lat = parseFloat(item.dataset.lat);
@@ -40,52 +45,88 @@ function selectDestination(item) {
   document.getElementById("search-input").value = name;
   document.getElementById("search-results").classList.add("hidden");
 
-  addDestinationMarker(lat, lng);
-  map.setView([lat, lng], 17);
+  if (typeof addDestinationMarker === "function") addDestinationMarker(lat, lng);
+
+  // ✅ New: open & pulse the POI marker if it exists
+  const id = item.dataset.id;
+  if (id && typeof highlightPOIById === "function") highlightPOIById(id);
+  else map.setView([lat, lng], 17);
+
   showNavPanel(name, lat, lng);
 }
 
 /**
- * Show navigation panel
+ * Show navigation panel and distance
  */
 function showNavPanel(name, lat, lng) {
   const navPanel = document.getElementById("nav-panel");
-  document.getElementById("nav-destination-name").textContent = name;
+  if (!navPanel) return;
 
-  const userLoc = getUserLocation();
-  if (userLoc) {
-    const distance = calculateDistance(userLoc.lat, userLoc.lng, lat, lng);
-    document.getElementById("nav-distance-value").textContent =
-      formatDistance(distance);
-  } else {
-    document.getElementById("nav-distance-value").textContent =
-      "Locate yourself first";
+  const nameEl = document.getElementById("nav-destination-name");
+  if (nameEl) nameEl.textContent = name;
+
+  const distanceEl = document.getElementById("nav-distance-value");
+  const userLoc = typeof getUserLocation === "function" ? getUserLocation() : null;
+
+  if (distanceEl) {
+    if (userLoc && Number.isFinite(userLoc.lat) && Number.isFinite(userLoc.lng)) {
+      const distance =
+        typeof calculateDistance === "function"
+          ? calculateDistance(userLoc.lat, userLoc.lng, lat, lng)
+          : null;
+
+      distanceEl.textContent =
+        distance != null && typeof formatDistance === "function"
+          ? formatDistance(distance)
+          : "--";
+    } else {
+      distanceEl.textContent = "Locate yourself first";
+    }
   }
 
+  navPanel.dataset.lat = String(lat);
+  navPanel.dataset.lng = String(lng);
   navPanel.classList.remove("hidden");
-  navPanel.dataset.lat = lat;
-  navPanel.dataset.lng = lng;
 }
 
-/**
- * Close navigation panel
- */
 function closeNavPanel() {
-  document.getElementById("nav-panel").classList.add("hidden");
+  const navPanel = document.getElementById("nav-panel");
+  if (navPanel) navPanel.classList.add("hidden");
 }
 
 /**
- * Start navigation
+ * Start navigation: find route + draw
  */
 function startNavigation() {
   const navPanel = document.getElementById("nav-panel");
-  const destLat = parseFloat(navPanel.dataset.lat);
-  const destLng = parseFloat(navPanel.dataset.lng);
+  if (!navPanel) return;
 
-  const userLoc = getUserLocation();
+  const destLat = Number(navPanel.dataset.lat);
+  const destLng = Number(navPanel.dataset.lng);
+
+  if (!Number.isFinite(destLat) || !Number.isFinite(destLng)) {
+    alert("Destination invalid. Please select again.");
+    return;
+  }
+
+  const userLoc = typeof getUserLocation === "function" ? getUserLocation() : null;
+
   if (!userLoc) {
     alert("Please enable location to start navigation.");
-    locateUser();
+    if (typeof locateUser === "function") locateUser();
+    return;
+  }
+
+  if (!Number.isFinite(userLoc.lat) || !Number.isFinite(userLoc.lng)) {
+    alert("Location invalid. Try locating again.");
+    if (typeof locateUser === "function") locateUser();
+    return;
+  }
+
+  // Routing module must exist
+  if (typeof findRoute !== "function") {
+    alert("Routing module not ready (findRoute missing).");
+    resetStartButton();
     return;
   }
 
@@ -94,21 +135,28 @@ function startNavigation() {
 
   const route = findRoute([userLoc.lng, userLoc.lat], [destLng, destLat]);
 
-  if (route && route.path && route.path.length > 0) {
-    drawRoute(route.path);
-    startGPSTracking();
+  if (route && Array.isArray(route.path) && route.path.length >= 2) {
+    // Draw route using UI module
+    if (typeof drawRoute === "function") drawRoute(route.path);
 
-    document.getElementById("start-nav").innerHTML =
-      '<i class="fas fa-walking"></i> Navigating...';
-    document.getElementById("nav-distance-value").textContent = formatDistance(
-      route.distance,
-    );
+    // Start tracking if available
+    if (typeof startGPSTracking === "function") startGPSTracking();
+
+    const startBtn = document.getElementById("start-nav");
+    if (startBtn) {
+      startBtn.innerHTML = '<i class="fas fa-walking"></i> Navigating...';
+      startBtn.style.background = "#8e44ad";
+    }
+
+    const distanceEl = document.getElementById("nav-distance-value");
+    if (distanceEl && typeof formatDistance === "function") {
+      distanceEl.textContent = formatDistance(route.distance);
+    }
   } else {
     isNavigating = false;
     currentDestination = null;
     alert("Could not find a route. Try a destination closer to the streets.");
-    document.getElementById("start-nav").innerHTML =
-      '<i class="fas fa-play"></i> Start Navigation';
+    resetStartButton();
   }
 }
 
@@ -116,103 +164,112 @@ function startNavigation() {
  * Cancel navigation
  */
 function cancelNavigation() {
-  stopGPSTracking();
+  if (typeof stopGPSTracking === "function") stopGPSTracking();
+
   isNavigating = false;
   currentDestination = null;
 
-  clearRoute();
-  clearDestinationMarker();
-  closeNavPanel();
+  if (typeof clearRoute === "function") clearRoute();
+  if (typeof clearDestinationMarker === "function") clearDestinationMarker();
 
-  document.getElementById("start-nav").innerHTML =
-    '<i class="fas fa-play"></i> Start Navigation';
-  document.getElementById("start-nav").style.background = "#8e44ad";
+  closeNavPanel();
+  resetStartButton();
 }
 
 /**
- * Called when user position updates (from location module)
+ * Called when user position updates (location.js should call this)
  */
 function onUserPositionUpdate(lat, lng) {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+  // If not navigating, just follow the user (but not too aggressive)
   if (!isNavigating) {
-    map.setView([lat, lng], 17);
+    if (typeof map !== "undefined" && map) {
+      map.setView([lat, lng], Math.max(map.getZoom?.() || 17, 17));
+    }
     return;
   }
 
   if (!currentDestination) return;
 
   // Update distance
-  const distance = calculateDistance(
-    lat,
-    lng,
-    currentDestination.lat,
-    currentDestination.lng,
-  );
-  document.getElementById("nav-distance-value").textContent =
-    formatDistance(distance);
+  const distance =
+    typeof calculateDistance === "function"
+      ? calculateDistance(lat, lng, currentDestination.lat, currentDestination.lng)
+      : null;
 
-  // Check if arrived (within 15 meters)
-  if (distance < 15) {
+  const distanceEl = document.getElementById("nav-distance-value");
+  if (distanceEl && distance != null && typeof formatDistance === "function") {
+    distanceEl.textContent = formatDistance(distance);
+  }
+
+  // Arrival threshold
+  if (distance != null && distance < 10) {
     arrivedAtDestination();
     return;
   }
 
-  // Update route
-  updateRoute(lat, lng);
-}
-
-/**
- * Update route from current position
- */
-function updateRoute(lat, lng) {
-  if (!currentDestination) return;
-
-  clearRoute();
-
-  const route = findRoute(
-    [lng, lat],
-    [currentDestination.lng, currentDestination.lat],
-  );
-
-  if (route && route.path) {
-    const latLngs = route.path.map((coord) => [coord[1], coord[0]]);
-    L.polyline(latLngs, {
-      color: "#8e44ad",
-      weight: 5,
-      opacity: 0.8,
-    }).addTo(map);
-
-    document.getElementById("nav-distance-value").textContent = formatDistance(
-      route.distance,
-    );
+  // Reroute with cooldown
+  const now = Date.now();
+  if (now - lastRerouteAt >= REROUTE_COOLDOWN_MS) {
+    lastRerouteAt = now;
+    updateRoute(lat, lng);
   }
 }
 
 /**
- * Called when user arrives at destination
+ * Update route (reroute)
  */
-function arrivedAtDestination() {
-  isNavigating = false;
-  stopGPSTracking();
+function updateRoute(lat, lng) {
+  if (!currentDestination) return;
+  if (typeof findRoute !== "function") return;
 
-  const startBtn = document.getElementById("start-nav");
-  startBtn.innerHTML =
-    '<i class="fas fa-flag-checkered"></i> You have arrived!';
-  startBtn.style.background = "#27ae60";
+  const route = findRoute([lng, lat], [currentDestination.lng, currentDestination.lat]);
 
-  showArrivalPopup();
-  console.log("Arrived at destination!");
+  if (route && Array.isArray(route.path) && route.path.length >= 2) {
+    if (typeof drawRoute === "function") drawRoute(route.path);
+
+    const distanceEl = document.getElementById("nav-distance-value");
+    if (distanceEl && typeof formatDistance === "function") {
+      distanceEl.textContent = formatDistance(route.distance);
+    }
+  }
 }
 
 /**
- * Check if currently navigating
+ * Arrived handler
  */
+function arrivedAtDestination() {
+  isNavigating = false;
+
+  if (typeof stopGPSTracking === "function") stopGPSTracking();
+
+  const startBtn = document.getElementById("start-nav");
+  if (startBtn) {
+    startBtn.innerHTML = '<i class="fas fa-flag-checkered"></i> You have arrived!';
+    startBtn.style.background = "#27ae60";
+  }
+
+  if (typeof showArrivalPopup === "function") showArrivalPopup();
+  console.log("Arrived at destination!");
+}
+
+/* =========================
+   Helpers / Getters
+   ========================= */
+
+function resetStartButton() {
+  const startBtn = document.getElementById("start-nav");
+  if (!startBtn) return;
+
+  startBtn.innerHTML = '<i class="fas fa-play"></i> Start Navigation';
+  startBtn.style.background = "#8e44ad";
+}
+
 function getIsNavigating() {
   return isNavigating;
 }
 
-/**
- * Get current destination
- */
 function getCurrentDestination() {
   return currentDestination;
 }

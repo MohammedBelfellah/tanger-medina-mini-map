@@ -1,8 +1,13 @@
+document.addEventListener("DOMContentLoaded", () => {
+  try {
+    initializeMap();
+  } catch (err) {
+    console.error("❌ Map initialization failed:", err);
+  }
 
-document.addEventListener("DOMContentLoaded", function () {
-  // Initialize the map
-  initializeMap();
-
-  // Initialize navigation and search features
-  initNavigation();
+  try {
+    if (typeof initNavigation === "function") initNavigation();
+  } catch (err) {
+    console.error("❌ Navigation init failed:", err);
+  }
 });
