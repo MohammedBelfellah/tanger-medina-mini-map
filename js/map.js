@@ -6,24 +6,185 @@
 
 let map;
 
-/**
- * Initialize the Leaflet map with custom settings
- */
+/* =========================
+   Helpers
+   ========================= */
+
+function escapeHtml(str) {
+  return String(str ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function getPoiName(props) {
+  return (
+    props.name ||
+    props["name:fr"] ||
+    props["name:en"] ||
+    props["name:ar"] ||
+    "Unnamed place"
+  );
+}
+
+// Normalize POI type into our 6 legend categories
+function normalizePoiKey(props) {
+  const amenity = props.amenity;
+  const tourism = props.tourism;
+  const historic = props.historic;
+  const type = props.type;
+  const category = props.category;
+
+  const raw =
+    (type || amenity || tourism || historic || category || "")
+      .toString()
+      .toLowerCase()
+      .trim();
+
+  // Map common OSM values -> our keys
+  if (raw.includes("cafe")) return "cafe";
+  if (raw.includes("restaurant") || raw.includes("fast_food")) return "restaurant";
+
+  // worship (mosque / church etc)
+  if (
+    raw.includes("place_of_worship") ||
+    raw.includes("mosque") ||
+    raw.includes("worship")
+  )
+    return "worship";
+
+  if (raw.includes("museum") || raw.includes("gallery")) return "museum";
+
+  if (
+    raw.includes("monument") ||
+    raw.includes("memorial") ||
+    raw.includes("attraction") ||
+    raw.includes("historic") ||
+    raw.includes("fort") ||
+    raw.includes("ruins")
+  )
+    return "monument";
+
+  if (raw.includes("viewpoint") || raw.includes("information")) return "viewpoint";
+
+  // default: ignore (we only draw 6 categories)
+  return null;
+}
+
+function featureToPOI(feature) {
+  if (!feature || feature.geometry?.type !== "Point") return null;
+
+  const coords = feature.geometry.coordinates;
+  const lng = coords?.[0];
+  const lat = coords?.[1];
+  if (typeof lat !== "number" || typeof lng !== "number") return null;
+
+  const props = feature.properties || {};
+  const key = normalizePoiKey(props);
+  if (!key) return null;
+
+  const name = getPoiName(props);
+  const desc = props.short_description || props.description || "";
+
+  // stable id
+  const id =
+    props.id ||
+    props.osm_id ||
+    props["@id"] ||
+    `${key}_${lat.toFixed(6)}_${lng.toFixed(6)}`;
+
+  return { id, key, lat, lng, name, desc };
+}
+
+/* =========================
+   POI Global Index (for search/navigation if needed)
+   ========================= */
+window.poiLayers = window.poiLayers || {};
+window.poiIndex = window.poiIndex || {};
+
+/* =========================
+   POI Filters Control
+   ========================= */
+
+let __poiFiltersControl = null;
+
+function addPOIFiltersControl() {
+  if (__poiFiltersControl) return;
+
+  __poiFiltersControl = L.control({ position: "topright" });
+
+  __poiFiltersControl.onAdd = function () {
+    const div = L.DomUtil.create("div", "poi-filters leaflet-control");
+
+    div.innerHTML = `
+      <div class="poi-filters-title">POI Filters</div>
+      <label><input type="checkbox" data-key="cafe" checked> Café</label>
+      <label><input type="checkbox" data-key="restaurant" checked> Restaurant</label>
+      <label><input type="checkbox" data-key="worship" checked> Mosque / Worship</label>
+      <label><input type="checkbox" data-key="museum" checked> Museum</label>
+      <label><input type="checkbox" data-key="monument" checked> Monument</label>
+      <label><input type="checkbox" data-key="viewpoint" checked> Viewpoint</label>
+    `;
+
+    // prevent map drag/zoom when clicking inside the control
+    L.DomEvent.disableClickPropagation(div);
+    L.DomEvent.disableScrollPropagation(div);
+
+    // events
+    div.querySelectorAll("input[type='checkbox']").forEach((cb) => {
+      cb.addEventListener("change", (e) => {
+        const key = e.target.dataset.key;
+        const layer = window.poiLayers?.[key];
+        if (!layer) return;
+
+        if (e.target.checked) layer.addTo(map);
+        else if (map.hasLayer(layer)) map.removeLayer(layer);
+      });
+    });
+
+    return div;
+  };
+
+  __poiFiltersControl.addTo(map);
+}
+
+function syncPOIFiltersWithLayers() {
+  const controlEl = document.querySelector(".poi-filters");
+  if (!controlEl) return;
+
+  controlEl.querySelectorAll("input[type='checkbox']").forEach((cb) => {
+    const key = cb.dataset.key;
+    const layer = window.poiLayers?.[key];
+    if (!layer) return;
+    cb.checked = map.hasLayer(layer);
+  });
+}
+
+/* =========================
+   Initialize Map
+   ========================= */
+
 function initializeMap() {
   // Map bounds: Morocco region (prevents panning too far away)
   const bounds = L.latLngBounds(
-    L.latLng(27.5, -15.0), // Southwest corner
-    L.latLng(40.0, 0.0), // Northeast corner
+    L.latLng(27.5, -15.0), // Southwest
+    L.latLng(40.0, 0.0) // Northeast
   );
 
-  // Create map instance
+  // Disable default zoomControl so it doesn't sit under search
   map = L.map("map", {
     minZoom: 6,
     maxZoom: 19,
     maxBounds: bounds,
     maxBoundsViscosity: 1.0,
     attributionControl: false,
-  }).setView([35.788, -5.809], 16); // Center on Old Medina
+    zoomControl: false,
+  }).setView([35.788, -5.809], 16);
+
+  // Put zoom controls bottom-left (clean)
+  L.control.zoom({ position: "bottomleft" }).addTo(map);
 
   // Custom attribution with Morocco flag
   L.control
@@ -33,8 +194,7 @@ function initializeMap() {
     })
     .addTo(map);
 
-  // Base map layer (Stamen Toner Lite via Stadia Maps)
-  // API key is domain-restricted in Stadia Maps dashboard for security
+  // Base map layer (Stamen Toner Lite via Stadia)
   const STADIA_API_KEY = "18627d38-4099-488c-981c-41a1c7cf5a98";
 
   L.tileLayer(
@@ -43,57 +203,54 @@ function initializeMap() {
       maxZoom: 19,
       attribution:
         '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://stamen.com/">Stamen Design</a>',
-    },
+    }
   ).addTo(map);
 
-  // Load medina boundary data
+  // ✅ Add legend + POI filters control immediately (so it never disappears)
+  addLegend(map);
+  addPOIFiltersControl();
+
+  // Load data
   loadMedinaBoundary();
-
-  // Load medina streets data
   loadMedinaStreets();
-
-  // Load points of interest
   loadPOIs();
+
+  return map;
 }
 
-/**
- * Render the Old Medina boundary polygon on the map
- * @param {Object} geojsonData - GeoJSON data for the medina boundary
- */
+/* =========================
+   Boundary
+   ========================= */
+
 function renderMedinaBoundary(geojsonData) {
   const medinaLayer = L.geoJSON(geojsonData, {
     style: {
-      color: "#E63946", // Red border
+      color: "#E63946",
       weight: 3,
       opacity: 0.9,
-      fillColor: "#FFEAEA", // Light pink fill
+      fillColor: "#FFEAEA",
       fillOpacity: 0.4,
     },
   }).addTo(map);
 
-  // Fit map view to show the medina
   map.fitBounds(medinaLayer.getBounds(), { padding: [50, 50] });
 
-  // Add place labels
   addMedinaLabels();
 }
 
-/**
- * Render the medina streets on the map
- * Dead-end streets in orange, connected streets in brown
- * @param {Object} geojsonData - GeoJSON data for the streets
- */
+/* =========================
+   Streets
+   ========================= */
+
 function renderMedinaStreets(geojsonData) {
-  // Build a map of all endpoints to detect connections
   const endpointCount = {};
-  const tolerance = 0.00005; // ~5 meters tolerance for matching points
+  const tolerance = 0.00005; // ~5m
 
-  // Round coordinates to detect nearby points as same
-  const roundCoord = (coord) => {
-    return `${Math.round(coord[0] / tolerance) * tolerance},${Math.round(coord[1] / tolerance) * tolerance}`;
-  };
+  const roundCoord = (coord) =>
+    `${Math.round(coord[0] / tolerance) * tolerance},${
+      Math.round(coord[1] / tolerance) * tolerance
+    }`;
 
-  // Count how many streets connect at each endpoint
   geojsonData.features.forEach((feature) => {
     const coords = feature.geometry.coordinates;
     const start = roundCoord(coords[0]);
@@ -103,89 +260,154 @@ function renderMedinaStreets(geojsonData) {
     endpointCount[end] = (endpointCount[end] || 0) + 1;
   });
 
-  // Render streets with different colors based on connectivity
   L.geoJSON(geojsonData, {
     style: function (feature) {
       const coords = feature.geometry.coordinates;
       const start = roundCoord(coords[0]);
       const end = roundCoord(coords[coords.length - 1]);
-
-      // Dead-end: one endpoint connects to only 1 street (itself)
       const isDeadEnd = endpointCount[start] === 1 || endpointCount[end] === 1;
 
       if (isDeadEnd) {
         return {
-          color: "#E67E22", // Orange for dead-end streets
+          color: "#E67E22",
           weight: 3,
           opacity: 0.9,
-          dashArray: "5, 5", // Dashed line for dead-ends
-        };
-      } else {
-        return {
-          color: "#2C3E50", // Dark blue-gray for connected streets
-          weight: 3,
-          opacity: 0.9,
+          dashArray: "5, 5",
         };
       }
+
+      return {
+        color: "#2C3E50",
+        weight: 3,
+        opacity: 0.9,
+      };
     },
   }).addTo(map);
 }
 
-/**
- * Render POIs on the map with colored markers and popups
- * @param {Object} geojsonData - GeoJSON data for POIs
- */
+/* =========================
+   POIs (6 categories)
+   ========================= */
+
 function renderPOIs(geojsonData) {
-  // Color mapping for POI types
   const typeColors = {
-    square: "#3498db", // Blue
-    culture: "#9b59b6", // Purple
-    museum: "#e67e22", // Orange
-    street: "#27ae60", // Green
-    monument: "#e74c3c", // Red
-    viewpoint: "#1abc9c", // Teal
-    cafe: "#f39c12", // Yellow
-    gate: "#8e44ad", // Dark purple for gates (Bab)
+    cafe: "#f39c12",
+    restaurant: "#e67e22",
+    worship: "#9b59b6",
+    museum: "#2980b9",
+    monument: "#e74c3c",
+    viewpoint: "#1abc9c",
+    default: "#7f8c8d",
   };
 
-  L.geoJSON(geojsonData, {
-    pointToLayer: function (feature, latlng) {
-      const poiType = feature.properties.type;
-      const color = typeColors[poiType] || "#E63946";
+  // Pane above streets
+  if (!map.getPane("poisPane")) {
+    map.createPane("poisPane");
+    map.getPane("poisPane").style.zIndex = 650;
+  }
 
-      return L.circleMarker(latlng, {
-        radius: 8,
-        fillColor: color,
-        color: "#fff",
-        weight: 2,
-        opacity: 1,
-        fillOpacity: 0.9,
-      });
-    },
-    onEachFeature: function (feature, layer) {
-      if (feature.properties) {
-        const { name, type, short_description } = feature.properties;
-        layer.bindPopup(`
-          <strong>${name}</strong><br>
-          <em>${type}</em><br>
-          <small>${short_description}</small>
-        `);
-      }
-    },
-  }).addTo(map);
+  // Remove old layers if rerender
+  if (window.poiLayers && Object.keys(window.poiLayers).length > 0) {
+    Object.values(window.poiLayers).forEach((lg) => {
+      try {
+        if (map.hasLayer(lg)) map.removeLayer(lg);
+      } catch (e) {}
+    });
+  }
+
+  window.poiLayers = {
+    cafe: L.layerGroup(),
+    restaurant: L.layerGroup(),
+    worship: L.layerGroup(),
+    museum: L.layerGroup(),
+    monument: L.layerGroup(),
+    viewpoint: L.layerGroup(),
+  };
+
+  window.poiIndex = {};
+
+  const features = Array.isArray(geojsonData?.features) ? geojsonData.features : [];
+
+  for (const feature of features) {
+    const poi = featureToPOI(feature);
+    if (!poi) continue;
+
+    const color = typeColors[poi.key] || typeColors.default;
+
+    const marker = L.circleMarker([poi.lat, poi.lng], {
+      pane: "poisPane",
+      radius: 6,
+      fillColor: color,
+      color: "#fff",
+      weight: 1,
+      opacity: 1,
+      fillOpacity: 0.9,
+    });
+
+    const safeName = escapeHtml(poi.name);
+    const labelMap = {
+      cafe: "Café",
+      restaurant: "Restaurant",
+      worship: "Mosque / Worship",
+      museum: "Museum",
+      monument: "Monument",
+      viewpoint: "Viewpoint",
+    };
+    const safeLabel = escapeHtml(labelMap[poi.key] || poi.key);
+    const safeDesc = poi.desc ? `<br><small>${escapeHtml(poi.desc)}</small>` : "";
+
+    marker.bindPopup(`<strong>${safeName}</strong><br><em>${safeLabel}</em>${safeDesc}`);
+
+    // index for future highlight/open
+    window.poiIndex[poi.id] = marker;
+
+    // add to layer group
+    window.poiLayers[poi.key].addLayer(marker);
+  }
+
+  // Add all by default
+  Object.values(window.poiLayers).forEach((lg) => lg.addTo(map));
+
+  // if control exists, sync checkbox state
+  syncPOIFiltersWithLayers();
+
+  console.log("✅ POIs rendered:", features.length);
 }
 
 /**
- * Add text labels for key places inside the Old Medina
+ * Optional: highlight marker + open popup
  */
+function highlightPOIById(poiId) {
+  const marker = window.poiIndex?.[poiId];
+  if (!marker) return false;
+
+  const latlng = marker.getLatLng();
+  map.setView(latlng, Math.max(map.getZoom(), 17), { animate: true });
+  marker.openPopup();
+
+  try {
+    const el = marker.getElement && marker.getElement();
+    if (el) {
+      el.classList.remove("poi-pulse");
+      void el.offsetWidth;
+      el.classList.add("poi-pulse");
+      setTimeout(() => el.classList.remove("poi-pulse"), 1200);
+    }
+  } catch (e) {}
+
+  return true;
+}
+
+/* =========================
+   Labels
+   ========================= */
+
 function addMedinaLabels() {
-  // Custom pane for labels
   if (!map.getPane("customLabelsPane")) {
     map.createPane("customLabelsPane");
     map.getPane("customLabelsPane").style.zIndex = 680;
   }
 
-  // Key places in the Old Medina
   const places = [
     { name: "OLD MEDINA", lat: 35.786, lng: -5.811, size: "large" },
     { name: "Kasbah", lat: 35.788, lng: -5.808, size: "medium" },
@@ -195,14 +417,13 @@ function addMedinaLabels() {
     { name: "Dar el Makhzen", lat: 35.789, lng: -5.809, size: "small" },
   ];
 
-  // Create label markers
   places.forEach((place) => {
     const sizeClass =
       place.size === "large"
         ? "label-large"
         : place.size === "medium"
-          ? "label-medium"
-          : "label-small";
+        ? "label-medium"
+        : "label-small";
 
     const icon = L.divIcon({
       className: `map-label ${sizeClass}`,
@@ -212,9 +433,36 @@ function addMedinaLabels() {
     });
 
     L.marker([place.lat, place.lng], {
-      icon: icon,
+      icon,
       pane: "customLabelsPane",
       interactive: false,
     }).addTo(map);
   });
+}
+
+/* =========================
+   Legend
+   ========================= */
+
+function addLegend(map) {
+  const legend = L.control({ position: "bottomright" });
+
+  legend.onAdd = function () {
+    const div = L.DomUtil.create("div", "map-legend leaflet-control");
+    L.DomEvent.disableClickPropagation(div);
+    L.DomEvent.disableScrollPropagation(div);
+
+    div.innerHTML = `
+      <div class="legend-title">Legend</div>
+      <div class="legend-item"><span class="dot" style="background:#f39c12"></span> Café</div>
+      <div class="legend-item"><span class="dot" style="background:#e67e22"></span> Restaurant</div>
+      <div class="legend-item"><span class="dot" style="background:#9b59b6"></span> Mosque / Worship</div>
+      <div class="legend-item"><span class="dot" style="background:#2980b9"></span> Museum</div>
+      <div class="legend-item"><span class="dot" style="background:#e74c3c"></span> Monument</div>
+      <div class="legend-item"><span class="dot" style="background:#1abc9c"></span> Viewpoint</div>
+    `;
+    return div;
+  };
+
+  legend.addTo(map);
 }

@@ -1,7 +1,15 @@
-
+/**
+ * UI Module
+ * Destination marker + Route drawing utilities
+ * Compatible with routing.js + gps-simulator.js + navigation.js
+ */
 
 let destinationMarker = null;
-let routeLayer = null;
+
+// Single source of truth for route visuals
+let routeGroup = null; // L.LayerGroup
+let routeMainLine = null; // L.Polyline (main)
+let routeGlowLine = null; // L.Polyline (glow/overlay)
 
 /**
  * Add destination marker to map
@@ -12,7 +20,7 @@ function addDestinationMarker(lat, lng) {
   destinationMarker = L.marker([lat, lng], {
     icon: L.divIcon({
       className: "destination-marker",
-      html: '<i class="fas fa-flag-checkered" style="color: #e74c3c; font-size: 24px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);"></i>',
+      html: '<i class="fas fa-flag-checkered" style="color:#e74c3c;font-size:24px;text-shadow:2px 2px 4px rgba(0,0,0,0.3);"></i>',
       iconSize: [24, 24],
       iconAnchor: [12, 24],
     }),
@@ -40,70 +48,101 @@ function getDestinationMarker() {
 
 /**
  * Draw route on map
+ * @param {Array} path - array of [lng, lat] coords
+ * @returns {L.LayerGroup|null}
  */
 function drawRoute(path) {
   clearRoute();
 
   if (!path || path.length < 2) return null;
 
-  const latLngs = path.map((coord) => [coord[1], coord[0]]);
+  // Convert [lng,lat] -> [lat,lng]
+  const latLngs = path.map((c) => [c[1], c[0]]);
+
+  // Create a group so everything is removable in one call
+  routeGroup = L.layerGroup();
 
   // Main route line
-  routeLayer = L.polyline(latLngs, {
+  routeMainLine = L.polyline(latLngs, {
     color: "#8e44ad",
     weight: 6,
-    opacity: 0.8,
-  }).addTo(map);
+    opacity: 0.85,
+    lineJoin: "round",
+    lineCap: "round",
+  });
 
-  // Lighter line on top
-  L.polyline(latLngs, {
+  // Glow line on top
+  routeGlowLine = L.polyline(latLngs, {
     color: "#a855f7",
     weight: 4,
     opacity: 1,
-  }).addTo(map);
+    lineJoin: "round",
+    lineCap: "round",
+  });
 
-  map.fitBounds(routeLayer.getBounds(), { padding: [50, 50] });
+  // Optional: small start/end dots
+  const start = latLngs[0];
+  const end = latLngs[latLngs.length - 1];
 
-  return routeLayer;
+  const startDot = L.circleMarker(start, {
+    radius: 5,
+    color: "#ffffff",
+    weight: 2,
+    fillColor: "#27ae60",
+    fillOpacity: 1,
+  });
+
+  const endDot = L.circleMarker(end, {
+    radius: 5,
+    color: "#ffffff",
+    weight: 2,
+    fillColor: "#e74c3c",
+    fillOpacity: 1,
+  });
+
+  routeGroup.addLayer(routeMainLine);
+  routeGroup.addLayer(routeGlowLine);
+  routeGroup.addLayer(startDot);
+  routeGroup.addLayer(endDot);
+
+  routeGroup.addTo(map);
+
+  // Fit to route bounds
+  map.fitBounds(routeMainLine.getBounds(), { padding: [50, 50] });
+
+  return routeGroup;
 }
 
 /**
- * Clear route from map
+ * Clear route from map (ONLY the route)
  */
 function clearRoute() {
-  if (routeLayer) {
-    map.removeLayer(routeLayer);
-    routeLayer = null;
+  if (routeGroup) {
+    map.removeLayer(routeGroup);
+    routeGroup = null;
+    routeMainLine = null;
+    routeGlowLine = null;
   }
-
-  // Remove all purple polylines
-  map.eachLayer((layer) => {
-    if (layer instanceof L.Polyline && !(layer instanceof L.Polygon)) {
-      if (
-        layer.options &&
-        (layer.options.color === "#8e44ad" || layer.options.color === "#a855f7")
-      ) {
-        map.removeLayer(layer);
-      }
-    }
-  });
 }
 
 /**
- * Get current route layer
+ * Get current route layer (used by gps-simulator)
+ * We'll return the MAIN polyline if it exists,
+ * because it supports getLatLngs() cleanly.
  */
 function getRouteLayer() {
-  return routeLayer;
+  return routeMainLine || null;
 }
 
 /**
- * Show arrival popup
+ * Show arrival popup + vibration
  */
 function showArrivalPopup() {
   if (destinationMarker) {
     destinationMarker.bindPopup("You have arrived!").openPopup();
   }
 
+  // Mobile vibration (optional)
   if (navigator.vibrate) {
     navigator.vibrate([200, 100, 200]);
   }
